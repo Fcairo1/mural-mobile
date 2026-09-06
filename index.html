@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#252a23"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Mural">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: https://pbs.twimg.com https://i.redd.it https://preview.redd.it https://external-preview.redd.it https://a.thumbs.redditmedia.com https://b.thumbs.redditmedia.com; script-src 'self'; style-src 'self'; connect-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'">
+<title>Mural</title><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="stylesheet" href="mobile.css?v=1">
+</head><body>
+<header class="top"><div class="brand"><span>m</span>mural<i>.</i></div><button id="more" class="icon-button" aria-label="Abrir opções">•••</button></header>
+<main>
+<section id="welcome" class="welcome" hidden><p class="kicker">SEU CANTO DA INTERNET</p><h1>Leve suas ideias<br>com você.</h1><p>Importe o backup do Mural. Ele será guardado somente neste iPhone.</p><label class="import-big">＋ Importar backup<input id="first-import" type="file" accept="application/json,.json"></label><button id="show-install" class="quiet">Como instalar na Tela de Início</button></section>
+<section id="library" hidden>
+<div class="intro"><div><p class="kicker">SUA BIBLIOTECA</p><h1>Achados para<br>reencontrar.</h1></div><div class="stamp">salvar.<br>explorar.<br><em>voltar.</em><b>✳</b></div></div>
+<label class="search"><span>⌕</span><input id="search" type="search" placeholder="Buscar ideias, pessoas ou tags…"></label>
+<nav id="sources" class="pills" aria-label="Origem"></nav><div id="tags" class="pills tags" aria-label="Tags"></div>
+<div class="result"><span id="count"></span><select id="sort"><option value="new">Mais recentes</option><option value="old">Mais antigos</option></select></div>
+<section id="grid" class="grid"></section><div id="none" class="none" hidden><b>✳</b><p>Nenhum achado com esses filtros.</p></div>
+</section></main>
+<nav class="bottom" id="bottom" hidden><button data-view="all"><span>▦</span>Todos</button><button data-view="unread"><span>◷</span>Explorar</button><button data-view="favorites"><span>☆</span>Favoritos</button><button id="bottom-tags"><span>◇</span>Tags</button></nav>
+<dialog id="detail"><button class="close" data-close="detail">×</button><div id="detail-body"></div></dialog>
+<dialog id="menu"><button class="close" data-close="menu">×</button><p class="kicker">NESTE IPHONE</p><h2>Sua biblioteca local.</h2><button class="menu-action"><label>＋ Importar backup<input id="menu-import" type="file" accept="application/json,.json"></label></button><button id="export" class="menu-action">↗ Exportar backup</button><button id="install" class="menu-action">⌂ Instalar na Tela de Início</button><p class="privacy">O Mural não envia sua biblioteca para nenhum servidor. Imagens continuam sendo carregadas diretamente do X e Reddit.</p></dialog>
+<dialog id="install-help"><button class="close" data-close="install-help">×</button><p class="kicker">INSTALAR NO IPHONE</p><h2>Um app em três toques.</h2><ol><li>Abra esta página no <strong>Safari</strong>.</li><li>Toque em <strong>Compartilhar</strong> <span class="share">□↑</span>.</li><li>Escolha <strong>Adicionar à Tela de Início</strong>.</li></ol><p class="privacy">Depois, abra o Mural pelo ícone. A interface funciona offline; as imagens precisam de internet.</p></dialog>
+<div id="toast" role="status"></div>
+<script src="model.js?v=1"></script><script src="tagger.js?v=1"></script><script src="mobile.js?v=1"></script></body></html>
