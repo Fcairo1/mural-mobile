@@ -1,5 +1,5 @@
-const CACHE='mural-mobile-v2';
-const SHELL=['./','./index.html','./mobile.css?v=1','./mobile.js?v=1','./model.js?v=1','./tagger.js?v=1','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
+const CACHE='mural-mobile-v4';
+const SHELL=['./','./index.html','./mobile.css?v=2','./mobile.js?v=3','./model.js?v=2','./tagger.js?v=1','./sync.js?v=2','./sync-config.js?v=2','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET'||new URL(e.request.url).origin!==location.origin)return;e.respondWith(caches.match(e.request).then(hit=>hit||fetch(e.request).then(r=>{const copy=r.clone();caches.open(CACHE).then(c=>c.put(e.request,copy));return r;})));});
