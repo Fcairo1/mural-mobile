@@ -12,7 +12,7 @@ function stable(items,tagCatalog){return {format:'mural',version:2,kind:'backup'
 async function fingerprint(value){return b64url(await digest(JSON.stringify(value)));}
 function merge(remote,local){
  const map=new Map((remote.items||[]).map(i=>[i.id,i]));
- for(const right of local.items||[]){const left=map.get(right.id);if(!left){map.set(right.id,right);continue;}const newer=(right.modifiedAt||'')>=(left.modifiedAt||'')?right:left;map.set(right.id,{...left,...right,text:(right.text||'').length>=(left.text||'').length?right.text:left.text,images:right.images?.length?right.images:left.images,tags:newer.tags||[],note:newer.note||'',read:newer.read===true,favorite:newer.favorite===true,archived:newer.archived===true,modifiedAt:newer.modifiedAt||''});}
+ for(const right of local.items||[]){const left=map.get(right.id);if(!left){map.set(right.id,right);continue;}const newer=(right.modifiedAt||'')>(left.modifiedAt||'')?right:left;map.set(right.id,{...left,...right,text:(right.text||'').length>=(left.text||'').length?right.text:left.text,images:right.images?.length?right.images:left.images,tags:newer.tags||[],note:newer.note||'',read:newer.read===true,favorite:newer.favorite===true,archived:newer.archived===true,modifiedAt:newer.modifiedAt||''});}
  return stable([...map.values()],[...new Set([...(remote.tagCatalog||[]),...(local.tagCatalog||[]),...[...map.values()].flatMap(i=>i.tags||[])])]);
 }
 function generateCode(){return b64url(crypto.getRandomValues(new Uint8Array(32)));}
