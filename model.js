@@ -3,6 +3,13 @@
 const str=(v,n=20000)=>typeof v==='string'?v.slice(0,n):'';
 const cleanTags=v=>Array.isArray(v)?[...new Set(v.map(x=>str(x,60).trim()).filter(Boolean))].slice(0,30):[];
 const cleanCatalog=v=>Array.isArray(v)?[...new Set(v.map(x=>str(x,60).trim()).filter(Boolean))].slice(0,500):[];
+const linkId=(url,description='')=>{let h=2166136261;for(const c of (String(url).trim().toLowerCase()+'\u001f'+String(description).trim().toLowerCase())){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return 'link:'+('00000000'+(h>>>0).toString(16)).slice(-8)+':'+String(url).length.toString(36);};
+function normalizeLink(raw){
+ if(!raw||typeof raw!=='object')throw Error('Link inválido.');
+ const url=str(raw.url,8000).trim(),description=str(raw.description,2000).trim(),id=/^link:[a-z0-9:-]{4,80}$/i.test(str(raw.id,100))?str(raw.id,100):linkId(url,description);
+ if(!url&&!description)throw Error('Um link está vazio.');
+ return {id,url,description,note:str(raw.note),category:str(raw.category,120).trim(),subcategory:str(raw.subcategory,120).trim(),sheetRow:Number.isInteger(raw.sheetRow)&&raw.sheetRow>1?raw.sheetRow:null,createdAt:str(raw.createdAt,40)||new Date().toISOString(),modifiedAt:str(raw.modifiedAt,40),sheetStatus:['imported','synced','pending','error'].includes(raw.sheetStatus)?raw.sheetStatus:'pending'};
+}
 function normalize(raw, annotations=false){
  if(!raw||typeof raw!=='object') throw Error('Item inválido.');
  const source=raw.source==='reddit'||String(raw.id).startsWith('reddit:')?'reddit':'x';
@@ -15,19 +22,20 @@ function normalize(raw, annotations=false){
  type:raw.type==='video'?'video':images.length?'image':'text',date:str(raw.date,40),capturedAt:str(raw.capturedAt,40)||new Date().toISOString(),truncated:raw.truncated===true,
  tags:annotations?cleanTags(raw.tags):[],note:annotations?str(raw.note):'',read:annotations&&raw.read===true,favorite:annotations&&raw.favorite===true,archived:annotations&&raw.archived===true,inbox:annotations&&raw.inbox===true,modifiedAt:annotations?str(raw.modifiedAt,40):''};
 }
+function mergeLinks(existing,incoming){const map=new Map(existing.map(x=>[x.id,x]));let added=0,updated=0;for(const raw of incoming){const link=normalizeLink(raw),old=map.get(link.id);if(!old){map.set(link.id,link);added++;continue;}const newer=(link.modifiedAt||'')>(old.modifiedAt||'')?link:old;map.set(link.id,{...old,...link,...newer,sheetRow:old.sheetRow||link.sheetRow,sheetStatus:old.sheetStatus==='synced'?'synced':link.sheetStatus});updated++;}return {links:[...map.values()],added,updated};}
 function parse(input){
  const obj=typeof input==='string'?JSON.parse(input):input;
- if(!obj||!((obj.format==='mural-x'&&obj.version===1)||(obj.format==='mural'&&obj.version===2))||!Array.isArray(obj.items)) throw Error('Use um arquivo Mural (.json) exportado pela extensão ou pelo app.');
- if(obj.items.length>50000) throw Error('O limite desta versão é de 50000 itens por arquivo.');
- const items=obj.items.map(i=>normalize(i,obj.kind==='backup'));
+ if(!obj||!((obj.format==='mural-x'&&obj.version===1)||(obj.format==='mural'&&[2,3].includes(obj.version)))||!Array.isArray(obj.items)) throw Error('Use um arquivo Mural (.json) exportado pela extensão ou pelo app.');
+ if(obj.items.length>50000||(obj.links?.length||0)>10000) throw Error('O arquivo ultrapassa o limite desta versão.');
+ const items=obj.items.map(i=>normalize(i,obj.kind==='backup')),links=Array.isArray(obj.links)?obj.links.map(normalizeLink):[];
  const tagCatalog=cleanCatalog([...(Array.isArray(obj.tagCatalog)?obj.tagCatalog:[]),...items.flatMap(i=>i.tags)]);
- return {items,tagCatalog,backup:obj.kind==='backup'};
+ return {items,links,tagCatalog,backup:obj.kind==='backup'};
 }
 function merge(existing,incoming){
  const map=new Map(existing.map(x=>[x.id,x])); let added=0,updated=0;
  for(const item of incoming){const old=map.get(item.id);if(old){map.set(item.id,{...item,text:item.text.length>=old.text.length?item.text:old.text,images:item.images.length?item.images:old.images,tags:old.tags,note:old.note,read:old.read,favorite:old.favorite,archived:old.archived,inbox:old.inbox===true,modifiedAt:old.modifiedAt||''});updated++;}else{map.set(item.id,{...item,inbox:true});added++;}}
  return {items:[...map.values()],added,updated};
 }
-function backup(items,tagCatalog=[]){return {format:'mural',version:2,kind:'backup',exportedAt:new Date().toISOString(),tagCatalog:cleanCatalog([...tagCatalog,...items.flatMap(i=>i.tags||[])]),items};}
-const api={normalize,parse,merge,backup,cleanTags,cleanCatalog}; if(typeof module!=='undefined')module.exports=api; else root.MuralModel=api;
+function backup(items,tagCatalog=[],links=[]){return {format:'mural',version:3,kind:'backup',exportedAt:new Date().toISOString(),tagCatalog:cleanCatalog([...tagCatalog,...items.flatMap(i=>i.tags||[])]),items,links:links.map(normalizeLink)};}
+const api={normalize,normalizeLink,parse,merge,mergeLinks,backup,cleanTags,cleanCatalog,linkId}; if(typeof module!=='undefined')module.exports=api; else root.MuralModel=api;
 })(globalThis);

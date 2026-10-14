@@ -2,7 +2,7 @@
   "id": "/mural-mobile/",
   "name": "Mural — sua biblioteca pessoal",
   "short_name": "Mural",
-  "description": "Seus salvos do X e Reddit em um mural pessoal.",
+  "description": "Seus salvos do X, Reddit e links pessoais em um mural visual.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

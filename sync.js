@@ -8,12 +8,13 @@ async function identity(code){if(!/^[A-Za-z0-9_-]{43}$/.test(code))throw Error('
 async function key(code){return crypto.subtle.importKey('raw',await digest(code+':encryption'),{name:'AES-GCM'},false,['encrypt','decrypt']);}
 async function encrypt(value,code){const iv=crypto.getRandomValues(new Uint8Array(12)),cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await key(code),te.encode(JSON.stringify(value)))),joined=new Uint8Array(iv.length+cipher.length);joined.set(iv);joined.set(cipher,iv.length);const encoded=b64url(joined),chunks=[];for(let i=0;i<encoded.length;i+=500000)chunks.push(encoded.slice(i,i+500000));return chunks;}
 async function decrypt(chunks,code){try{const joined=unb64(chunks.join('')),iv=joined.slice(0,12),plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},await key(code),joined.slice(12));return JSON.parse(td.decode(plain));}catch{throw Error('Não foi possível decifrar a biblioteca. Confira o código de sincronização.');}}
-function stable(items,tagCatalog){return {format:'mural',version:2,kind:'backup',tagCatalog:[...tagCatalog].sort(),items:[...items].sort((a,b)=>a.id.localeCompare(b.id))};}
+function stable(items,tagCatalog,links=[]){return {format:'mural',version:3,kind:'backup',tagCatalog:[...tagCatalog].sort(),items:[...items].sort((a,b)=>a.id.localeCompare(b.id)),links:[...links].sort((a,b)=>a.id.localeCompare(b.id))};}
 async function fingerprint(value){return b64url(await digest(JSON.stringify(value)));}
 function merge(remote,local){
  const map=new Map((remote.items||[]).map(i=>[i.id,i]));
  for(const right of local.items||[]){const left=map.get(right.id);if(!left){map.set(right.id,right);continue;}const newer=(right.modifiedAt||'')>(left.modifiedAt||'')?right:left;map.set(right.id,{...left,...right,text:(right.text||'').length>=(left.text||'').length?right.text:left.text,images:right.images?.length?right.images:left.images,tags:newer.tags||[],note:newer.note||'',read:newer.read===true,favorite:newer.favorite===true,archived:newer.archived===true,modifiedAt:newer.modifiedAt||''});}
- return stable([...map.values()],[...new Set([...(remote.tagCatalog||[]),...(local.tagCatalog||[]),...[...map.values()].flatMap(i=>i.tags||[])])]);
+ const linkMap=new Map((remote.links||[]).map(x=>[x.id,x]));for(const right of local.links||[]){const left=linkMap.get(right.id);if(!left){linkMap.set(right.id,right);continue;}const newer=(right.modifiedAt||'')>(left.modifiedAt||'')?right:left;linkMap.set(right.id,{...left,...right,...newer,sheetRow:left.sheetRow||right.sheetRow,sheetStatus:left.sheetStatus==='synced'||right.sheetStatus==='synced'?'synced':newer.sheetStatus});}
+ return stable([...map.values()],[...new Set([...(remote.tagCatalog||[]),...(local.tagCatalog||[]),...[...map.values()].flatMap(i=>i.tags||[])])],[...linkMap.values()]);
 }
 function generateCode(){return b64url(crypto.getRandomValues(new Uint8Array(32)));}
 const api={identity,encrypt,decrypt,stable,fingerprint,merge,generateCode};if(typeof module!=='undefined')module.exports=api;else root.MuralSync=api;
